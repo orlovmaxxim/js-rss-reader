@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "start": "webpack --config webpack.config.js",
-    "eslint": "eslint"
+    "eslint": "eslint",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
