@@ -7,6 +7,8 @@ develop:
 build:
 		rm -rf dist
 		NODE_ENV=production npm run webpack
+surge:
+		surge --domain rss-reader-omxx.surge.sh
 lint:
 		npm run eslint .
 test:

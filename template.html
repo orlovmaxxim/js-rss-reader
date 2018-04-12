@@ -8,19 +8,38 @@
 </head>
 <body>
   <main>
-    <div class="jumbotron">
-      <form id="rss-form" class="form">
-        <div class="form-group">
-          <label for="rss-input">Please, write RSS address</label>
-          <input id="rss-input" type="text" class="input form-control" placeholder="Please, write URL">
-          <div class="invalid-feedback"></div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm">
+          <div class="jumbotron mt-3 bg-light">
+            <form id="rss-form" class="form">
+              <div class="form-group">
+                <label for="rss-input" class="font-weight-bold">Please, write RSS address</label>
+                <input id="rss-input" type="text" class="input form-control" placeholder="Please, write URL">
+                <div class="invalid-feedback"></div>
+              </div>
+              <button id="rss-btn" type="submit" class="btn btn-primary btn-lg">Add RSS feed</button>
+            </form>
+          </div>
         </div>
-        <button id="rss-btn" type="submit" class="btn btn-primary">Add</button>
-      </form>
+      </div>
     </div>
-    <div class="rss-list">
-      
+    <div class="container">
+      <div class="rss-list row"></div>
     </div>
   </main>
+  <div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Описание</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body"></div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
