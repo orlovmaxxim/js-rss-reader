@@ -71,17 +71,23 @@ export default () => {
         rssList.prepend(`<div id="${state.flowId}" class="col-6">
           <h2 class='title'>${title}</h2>
           <p class='description'>${description}</p>
-          ${itemsArr.map(({ articleTitle, link, articleDesc }) => `<ul class="list-unstyled list-group">
+          <ul class="list-unstyled list-group">
+          ${itemsArr.map(({ articleTitle, link, articleDesc }) => `
           <li class="list-group-item mb-2">
             <a href=${link}>${articleTitle}</a>
             </br>
             <button type="button" class="btn btn-primary btn-sm btn-outline-dark" data-whatever="${articleDesc}" data-toggle="modal" data-target="#descriptionModal">
               Open description
             </button>
-          </li></ul>`).join('')}
+          </li>`).join('')}
+          </ul>
         </div>`);
         rssInput.value = '';
-        const addedFlow = { url: state.address, lastPubDate: itemsArr[0].pubDate, id: state.flowId };
+        const addedFlow = {
+          url: state.address,
+          lastPubDate: itemsArr[0].pubDate,
+          id: state.flowId,
+        };
         state.flowId += 1;
         state.addedRssFlow = [addedFlow, ...state.addedRssFlow];
         state.formValid = true;
@@ -92,6 +98,36 @@ export default () => {
       });
   };
 
+  const updateFlow = ({ url, lastPubDate, id }) => {
+    const lastPubTime = new Date(lastPubDate).getTime();
+    axios.get(url)
+      .then((response) => {
+        const { itemsArr } = rssParse(response.data);
+        const newItemsArr = itemsArr.filter(item => new Date(item.pubDate).getTime() > lastPubTime);
+        if (!newItemsArr.length) {
+          return;
+        }
+        $(`#${id}`).find('ul').prepend(`${newItemsArr.map(({ articleTitle, link, articleDesc }) => `
+        <li class="list-group-item mb-2">
+          <a href=${link}>${articleTitle}</a>
+          </br>
+          <button type="button" class="btn btn-primary btn-sm btn-outline-dark" data-whatever="${articleDesc}" data-toggle="modal" data-target="#descriptionModal">
+            Open description
+          </button>
+        </li>`).join('')}`);
+        const itemIndexTimeChange = state.addedRssFlow.length - id;
+        state.addedRssFlow[itemIndexTimeChange].lastPubDate = newItemsArr[0].pubDate;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const updateNewsOnFlow = () => {
+    Promise.all(state.addedRssFlow.map(updateFlow))
+      .then(() => setTimeout(updateNewsOnFlow, 5000));
+  };
+
   rssInput.addEventListener('input', handleValidate);
   rssForm.addEventListener('submit', handleSubmitRss);
   descModal.on('show.bs.modal', (event) => {
@@ -99,31 +135,5 @@ export default () => {
     const recipient = button.data('whatever');
     descModal.find('.modal-body').text(recipient);
   });
-
-  setInterval(() => {
-    state.addedRssFlow.forEach((flow, i) => {
-      const lastPubTime = new Date(flow.lastPubDate).getTime();
-      axios.get(flow.url)
-        .then((response) => {
-          const { itemsArr } = rssParse(response.data);
-          const newItemsArr = itemsArr.filter(item => new Date(item.pubDate).getTime() > lastPubTime);
-          if (newItemsArr.length === 0) {
-            return;
-          }
-          state.addedRssFlow[i].lastPubDate = newItemsArr[0].pubDate;
-          $(`#${flow.id}`).find('ul').prepend(`${newItemsArr.map(({ articleTitle, link, articleDesc }) => `
-          <li class="list-group-item mb-2">
-            <a href=${link}>${articleTitle}</a>
-            </br>
-            <button type="button" class="btn btn-primary btn-sm btn-outline-dark" data-whatever="${articleDesc}" data-toggle="modal" data-target="#descriptionModal">
-              Open description
-            </button>
-          </li></ul>`).join('')}
-        </div>`);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    });
-  }, 5000);
+  updateNewsOnFlow();
 };
