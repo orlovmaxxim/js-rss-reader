@@ -9,6 +9,7 @@ export default () => {
     address: '',
     addedRssFlow: [],
     formValid: true,
+    flowId: 1,
   };
 
   const rssForm = document.getElementById('rss-form');
@@ -33,6 +34,7 @@ export default () => {
         articleTitle: val.querySelector('title').innerHTML,
         link: val.querySelector('link').innerHTML,
         articleDesc: val.querySelector('description').innerHTML,
+        pubDate: val.querySelector('pubDate').innerHTML,
       };
     });
 
@@ -57,7 +59,7 @@ export default () => {
 
   const handleSubmitRss = (event) => {
     event.preventDefault();
-    if (state.addedRssFlow.find(flow => flow === state.address)) {
+    if (state.addedRssFlow.find(flow => flow.url === state.address)) {
       state.formValid = false;
       rssInput.classList.add('is-invalid');
       errorSignature.textContent = 'this flow has already been added';
@@ -66,7 +68,7 @@ export default () => {
     axios.get(state.address)
       .then((response) => {
         const { title, description, itemsArr } = rssParse(response.data);
-        rssList.prepend(`<div class="col-6">
+        rssList.prepend(`<div id="${state.flowId}" class="col-6">
           <h2 class='title'>${title}</h2>
           <p class='description'>${description}</p>
           ${itemsArr.map(({ articleTitle, link, articleDesc }) => `<ul class="list-unstyled list-group">
@@ -79,7 +81,9 @@ export default () => {
           </li></ul>`).join('')}
         </div>`);
         rssInput.value = '';
-        state.addedRssFlow = [state.address, ...state.addedRssFlow];
+        const addedFlow = { url: state.address, lastPubDate: itemsArr[0].pubDate, id: state.flowId };
+        state.flowId += 1;
+        state.addedRssFlow = [addedFlow, ...state.addedRssFlow];
         state.formValid = true;
         state.address = '';
       })
@@ -95,4 +99,31 @@ export default () => {
     const recipient = button.data('whatever');
     descModal.find('.modal-body').text(recipient);
   });
+
+  setInterval(() => {
+    state.addedRssFlow.forEach((flow, i) => {
+      const lastPubTime = new Date(flow.lastPubDate).getTime();
+      axios.get(flow.url)
+        .then((response) => {
+          const { itemsArr } = rssParse(response.data);
+          const newItemsArr = itemsArr.filter(item => new Date(item.pubDate).getTime() > lastPubTime);
+          if (newItemsArr.length === 0) {
+            return;
+          }
+          state.addedRssFlow[i].lastPubDate = newItemsArr[0].pubDate;
+          $(`#${flow.id}`).find('ul').prepend(`${newItemsArr.map(({ articleTitle, link, articleDesc }) => `
+          <li class="list-group-item mb-2">
+            <a href=${link}>${articleTitle}</a>
+            </br>
+            <button type="button" class="btn btn-primary btn-sm btn-outline-dark" data-whatever="${articleDesc}" data-toggle="modal" data-target="#descriptionModal">
+              Open description
+            </button>
+          </li></ul>`).join('')}
+        </div>`);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+  }, 5000);
 };
