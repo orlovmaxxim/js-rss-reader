@@ -2,6 +2,7 @@ import 'bootstrap';
 import $ from 'jquery';
 import validator from 'validator';
 import axios from 'axios';
+import rssParse from './rss-parse';
 import './main.scss';
 
 export default () => {
@@ -18,28 +19,6 @@ export default () => {
   const rssBtn = rssForm.querySelector('#rss-btn');
   const rssList = $('.rss-list');
   const descModal = $('#descriptionModal');
-
-  const rssParse = (data) => {
-    const itemsArr = [];
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(data, 'application/xml');
-    const channel = doc.querySelector('channel');
-
-    const title = channel.querySelector('title').innerHTML;
-    const description = channel.querySelector('description').innerHTML;
-
-    const items = channel.querySelectorAll('item');
-    items.forEach((val, i) => {
-      itemsArr[i] = {
-        articleTitle: val.querySelector('title').innerHTML,
-        link: val.querySelector('link').innerHTML,
-        articleDesc: val.querySelector('description').innerHTML,
-        pubDate: val.querySelector('pubDate').innerHTML,
-      };
-    });
-
-    return { title, description, itemsArr };
-  };
 
   const handleValidate = () => {
     state.address = `${rssInput.value}`;
