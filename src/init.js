@@ -3,6 +3,7 @@ import $ from 'jquery';
 import validator from 'validator';
 import axios from 'axios';
 import rssParse from './rss-parse';
+import renderRssFlow from './rss-render';
 import './main.scss';
 
 export default () => {
@@ -47,28 +48,18 @@ export default () => {
     axios.get(state.address)
       .then((response) => {
         const { title, description, itemsArr } = rssParse(response.data);
-        rssList.prepend(`<div id="${state.flowId}" class="col-6">
-          <h2 class='title'>${title}</h2>
-          <p class='description'>${description}</p>
-          <ul class="list-unstyled list-group">
-          ${itemsArr.map(({ articleTitle, link, articleDesc }) => `
-          <li class="list-group-item mb-2">
-            <a href=${link}>${articleTitle}</a>
-            </br>
-            <button type="button" class="btn btn-primary btn-sm btn-outline-dark" data-whatever="${articleDesc}" data-toggle="modal" data-target="#descriptionModal">
-              Open description
-            </button>
-          </li>`).join('')}
-          </ul>
-        </div>`);
-        rssInput.value = '';
         const addedFlow = {
+          title,
+          description,
+          itemsArr,
           url: state.address,
           lastPubDate: itemsArr[0].pubDate,
           id: state.flowId,
         };
-        state.flowId += 1;
         state.addedRssFlow = [addedFlow, ...state.addedRssFlow];
+        renderRssFlow(rssList, state.addedRssFlow[0]);
+        rssInput.value = '';
+        state.flowId += 1;
         state.formValid = true;
         state.address = '';
       })
